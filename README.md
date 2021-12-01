@@ -138,7 +138,7 @@ UPD: 14.04.2019 у игрока могут быть только swordsman, bowm
 
 Обратите внимание, что в бандл не собираются картинки, прописанные в CSS, т.к. не подключен соответствующий Loader.
 
-Используйте [url-loader](https://github.com/webpack-contrib/url-loader). Добейтесь работоспособной сборки.
+Используйте [url-loader](https://github.com/webpack-contrib/urln-loader). Добейтесь работоспособной сборки.
 
 
 ### 3. Отрисовка поля

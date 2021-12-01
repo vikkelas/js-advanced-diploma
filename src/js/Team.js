@@ -1,3 +1,27 @@
-export default class Team {
+import {
+  generateTeam,
+  positionGenerator,
+} from './generators';
+import Bowman from './Bowman';
+import Swordsman from './Swordsman';
+import GamePlay from './GamePlay';
+import PositionedCharacter from './PositionedCharacter';
 
+export default class Team {
+  constructor() {
+    this.positionChar = [];
+    this.startLine = [0, 1];
+    this.allowedTypes = [new Bowman(), new Swordsman()];
+    this.bordsize = GamePlay.bordsize;
+  }
+
+  // создание массива для отрисовки персонажей(игрок: человек)
+  creatChar() {
+    const arrGenTeam = generateTeam(this.allowedTypes, 1, 2);
+    const positionLine = positionGenerator(this.startLine, this.bordsize);
+    for (const item of arrGenTeam) {
+      this.positionChar.push(new PositionedCharacter(item, positionLine.next().value));
+    }
+    return this.positionChar;
+  }
 }
