@@ -10,12 +10,8 @@ export default class GameController {
 
   init() {
     this.playerTeam.creatChar();
-    console.log(this.playerTeam)
-    // TODO: add event listeners to gamePlay events
-    // TODO: load saved stated from stateService
     this.gamePlay.drawUi(themes.prairie);
-    // this.gamePlay.redrawPositions();
-    // this.gamePlay.redrawPositi();
+    this.gamePlay.redrawPositions(this.playerTeam.positionChar);
   }
 
   onCellClick(index) {

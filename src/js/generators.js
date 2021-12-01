@@ -23,7 +23,7 @@ export function generateTeam(allowedTypes, maxLevel, characterCount) {
 }
 
 export function* positionGenerator(startLine, bordsize) {
-  const fullField = [...Array(bordsize ** 2).keys()];
+  const fullField = [...new Array(bordsize ** 2).keys()];
   const lineHero = fullField.filter((item) => startLine.includes(item % bordsize));
   // Тосование Фишера-Йетса ниже:
   for (let i = lineHero.length - 1; i > 0; i -= 1) {
