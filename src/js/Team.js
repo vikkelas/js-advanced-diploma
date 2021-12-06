@@ -4,7 +4,7 @@ import {
 } from './generators';
 import Bowman from './Bowman';
 import Swordsman from './Swordsman';
-import Magician from "./Magician"
+// import Magician from "./Magician"
 import GamePlay from './GamePlay';
 import PositionedCharacter from './PositionedCharacter';
 
@@ -12,7 +12,7 @@ export default class Team {
   constructor() {
     this.positionChar = [];
     this.startLine = [0, 1];
-    this.allowedTypes = [new Bowman(), new Swordsman()];
+    this.allowedTypes = [Bowman, Swordsman];
     this.bordsize = new GamePlay();
   }
 
@@ -23,6 +23,7 @@ export default class Team {
     for (const item of arrGenTeam) {
       this.positionChar.push(new PositionedCharacter(item, positionLine.next().value));
     }
+    console.log(this.positionChar);
     return this.positionChar;
   }
 }
