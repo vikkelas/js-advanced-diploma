@@ -23,7 +23,6 @@ export default class Team {
     for (const item of arrGenTeam) {
       this.positionChar.push(new PositionedCharacter(item, positionLine.next().value));
     }
-    console.log(this.positionChar);
     return this.positionChar;
   }
 }

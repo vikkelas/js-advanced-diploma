@@ -38,3 +38,20 @@ export function calcHealthLevel(health) {
 
   return 'high';
 }
+
+export function calcArrDist(charDist, index) {
+  const arrDist = [];
+  for (let i = (index - 8 * charDist); i < (index + 8 * charDist) + 8; i += 8) {
+    if (i >= 0 && i <= 63) {
+      arrDist.push(i);
+    }
+  }
+  arrDist.forEach((item) => {
+    for (let n = item - charDist; n < item + charDist; n += 1) {
+      if (n > 0) {
+        arrDist.push(n);
+      }
+    }
+  });
+  return arrDist;
+}
