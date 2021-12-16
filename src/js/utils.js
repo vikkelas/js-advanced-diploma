@@ -1,3 +1,4 @@
+/* eslint-disable linebreak-style */
 export function calcTileType(index, boardSize) {
   // TODO: write logic here
   const rightPosition = [];
@@ -39,19 +40,30 @@ export function calcHealthLevel(health) {
   return 'high';
 }
 
-export function calcArrDist(charDist, index) {
+export function calcDist(charDist, boardSize, activeCharPosition) {
   const arrDist = [];
-  for (let i = (index - 8 * charDist); i < (index + 8 * charDist) + 8; i += 8) {
-    if (i >= 0 && i <= 63) {
-      arrDist.push(i);
+  const positionRow = Math.floor(activeCharPosition / boardSize);
+  const positionColumn = activeCharPosition % boardSize;
+  for (let i = 1; i <= charDist; i += 1) {
+    if (positionColumn + i < boardSize) {
+      arrDist.push(positionRow * boardSize + (positionColumn + i));
+    }
+    if (positionColumn - i >= 0) {
+      arrDist.push(positionRow * boardSize + (positionColumn - i));
     }
   }
+  arrDist.push(activeCharPosition);
   arrDist.forEach((item) => {
-    for (let n = item - charDist; n < item + charDist; n += 1) {
-      if (n > 0) {
+    for (let n = (item - (charDist * boardSize)); n <= (item + (charDist * boardSize)); n += 8) {
+      if (n >= 0 && n < 64 && n !== activeCharPosition) {
         arrDist.push(n);
       }
     }
   });
-  return arrDist;
+  const unique = [...new Set(arrDist)];
+  const indexDel = unique.indexOf(activeCharPosition);
+  if (indexDel > -1) {
+    unique.splice(indexDel, 1);
+  }
+  return unique;
 }
