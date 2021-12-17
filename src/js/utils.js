@@ -55,12 +55,40 @@ export function calcDist(charDist, boardSize, activeCharPosition) {
   arrDist.push(activeCharPosition);
   arrDist.forEach((item) => {
     for (let n = (item - (charDist * boardSize)); n <= (item + (charDist * boardSize)); n += 8) {
-      if (n >= 0 && n < 64 && n !== activeCharPosition) {
+      if (n >= 0 && n < (boardSize ** 2) && n !== activeCharPosition) {
         arrDist.push(n);
       }
     }
   });
   const unique = [...new Set(arrDist)];
+  const indexDel = unique.indexOf(activeCharPosition);
+  if (indexDel > -1) {
+    unique.splice(indexDel, 1);
+  }
+  return unique;
+}
+
+export function calcAttack(charAtack, boardSize, activeCharPosition) {
+  const arrDistAtack = [];
+  const positionRow = Math.floor(activeCharPosition / boardSize);
+  const positionColumn = activeCharPosition % boardSize;
+  for (let i = 1; i <= charAtack; i += 1) {
+    if (positionColumn + i < boardSize) {
+      arrDistAtack.push(positionRow * boardSize + (positionColumn + i));
+    }
+    if (positionColumn - i >= 0) {
+      arrDistAtack.push(positionRow * boardSize - (positionColumn - i));
+    }
+  }
+  arrDistAtack.push(activeCharPosition);
+  arrDistAtack.forEach((item) => {
+    for (let n = (item - (charAtack * boardSize)); n <= (item + (charAtack * boardSize)); n += 8) {
+      if (n >= 0 && n < boardSize ** 2 && n !== activeCharPosition) {
+        arrDistAtack.push(n);
+      }
+    }
+  });
+  const unique = [...new Set(arrDistAtack)];
   const indexDel = unique.indexOf(activeCharPosition);
   if (indexDel > -1) {
     unique.splice(indexDel, 1);
