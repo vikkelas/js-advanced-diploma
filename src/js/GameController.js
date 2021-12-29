@@ -9,7 +9,6 @@ import {
   calcDist,
 } from './utils';
 import {
-  characterGenerator,
   positionGenerator,
 } from './generators';
 import cursors from './cursors';
@@ -35,7 +34,7 @@ export default class GameController {
   }
 
   init() {
-    this.playerTeam.creatChar();
+    this.playerTeam.creatChar(1, 2, undefined);
     this.compTeam.genPosComp();
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
     this.gamePlay.drawUi(this.state.level);
@@ -101,6 +100,9 @@ export default class GameController {
             this.computerLogic();
           } else {
             this.levelUp();
+            const newChar = this.playerTeam.creatChar(1, 1, this.playerTeam.allTypes);
+            this.arrCellHero.push(newChar);
+            this.discharge(index);
           }
         });
       }
