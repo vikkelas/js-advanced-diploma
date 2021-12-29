@@ -1,6 +1,5 @@
 /* eslint-disable linebreak-style */
 export function calcTileType(index, boardSize) {
-  // TODO: write logic here
   const rightPosition = [];
   for (let i = 0; i < boardSize; i += 1) {
     rightPosition.push(i * boardSize - 1);
@@ -77,7 +76,7 @@ export function calcAttack(charAtack, boardSize, activeCharPosition) {
       arrDistAtack.push(positionRow * boardSize + (positionColumn + i));
     }
     if (positionColumn - i >= 0) {
-      arrDistAtack.push(positionRow * boardSize - (positionColumn - i));
+      arrDistAtack.push(positionRow * boardSize + (positionColumn - i));
     }
   }
   arrDistAtack.push(activeCharPosition);

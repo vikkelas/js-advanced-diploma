@@ -8,6 +8,10 @@ import {
   calcAttack,
   calcDist,
 } from './utils';
+import {
+  characterGenerator,
+  positionGenerator,
+} from './generators';
 import cursors from './cursors';
 
 export default class GameController {
@@ -26,13 +30,15 @@ export default class GameController {
     this.arrCellHero = null;
     this.distanceP = null;
     this.distanceAt = null;
+    this.state.level = themes.prairie;
+    this.starLinePlay = [0, 1];
   }
 
   init() {
     this.playerTeam.creatChar();
     this.compTeam.genPosComp();
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
-    this.gamePlay.drawUi(themes.prairie);
+    this.gamePlay.drawUi(this.state.level);
     this.gamePlay.redrawPositions(this.arrCellHero);
     this.addListner();
   }
@@ -62,12 +68,9 @@ export default class GameController {
       }
     });
     // создание массивов с расположением персонажей
-    const posCharPlay = [];
     const posCharCom = [];
     for (let i = 0; i < this.arrCellHero.length; i += 1) {
-      if (this.arrTypeHero.includes(this.arrCellHero[i].character.type)) {
-        posCharPlay.push(this.arrCellHero[i].position);
-      } else {
+      if (!this.arrTypeHero.includes(this.arrCellHero[i].character.type)) {
         posCharCom.push(this.arrCellHero[i].position);
       }
     }
@@ -79,14 +82,27 @@ export default class GameController {
       if (this.distanceP.includes(index) && !posCharCom.includes(index)) {
         const numElArr = this.playerTeam.positionChar.indexOf(this.activeChar);
         this.playerTeam.positionChar[numElArr].position = index;
-        this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
-        this.gamePlay.redrawPositions(this.arrCellHero);
-        this.gamePlay.deselectCell(this.previousIndexChar);
-        this.onCellLeave(index);
-        this.distanceP = null;
-        this.distanceAt = null;
-        this.activeChar = null;
-        this.state.activePlayer = 'comp';
+        this.discharge(index);
+        this.computerLogic();
+      }
+      if (posCharCom.includes(index) && this.distanceAt.includes(index)) {
+        const attacker = this.activeChar.character.attack;
+        const numElComp = this.compTeam.positionComp.findIndex((item) => item.position === index);
+        const targetDef = this.compTeam.positionComp[numElComp].character.defence;
+        const damage = Math.max(attacker - targetDef, attacker * 0.1);
+        const healCh = this.compTeam.positionComp[numElComp].character.health - damage;
+        this.gamePlay.showDamage(index, damage).then(() => {
+          this.compTeam.positionComp[numElComp].character.health = healCh;
+          if (this.compTeam.positionComp[numElComp].character.health < 1) {
+            this.compTeam.positionComp.splice(numElComp, 1);
+          }
+          this.discharge(index);
+          if (this.compTeam.positionComp.length !== 0) {
+            this.computerLogic();
+          } else {
+            this.levelUp();
+          }
+        });
       }
     }
   }
@@ -102,8 +118,9 @@ export default class GameController {
       }
     }
     this.arrCellHero.forEach((item) => {
-      const checkIndexPlayer = posCharPlay.includes(index);
-      const chaeckIndexComp = posCharCom.includes(index);
+      const checkIndPlayer = posCharPlay.includes(index);
+      const chaeckIndComp = posCharCom.includes(index);
+      const actChar = this.activeChar !== null;
       let checkIndDist = null;
       if (this.distanceP !== null) {
         checkIndDist = this.distanceP.includes(index);
@@ -117,22 +134,22 @@ export default class GameController {
         const messageInfo = `🎖 ${heroInfo.level} \u2694${heroInfo.attack} 🛡${heroInfo.defence} \u2764${heroInfo.health}`;
         this.gamePlay.showCellTooltip(messageInfo, index);
       }
-      if (this.activeCharPosition === null && checkIndexPlayer) {
+      if (this.activeCharPosition === null && checkIndPlayer) {
         this.gamePlay.setCursor(cursors.pointer);
       }
-      if ((checkIndexPlayer && index !== this.activeCharPosition) || checkIndDist) {
+      if ((checkIndPlayer && index !== this.activeCharPosition) || checkIndDist) {
         this.gamePlay.setCursor(cursors.pointer);
       }
-      if (!checkIndexPlayer && !chaeckIndexComp && checkIndDist) {
+      if (!checkIndPlayer && !chaeckIndComp && checkIndDist) {
         this.gamePlay.selectCell(index, 'green');
       }
-      if (chaeckIndexComp && checkIndAtack) {
+      if (chaeckIndComp && checkIndAtack) {
         this.gamePlay.setCursor(cursors.crosshair);
         this.gamePlay.selectCell(index, 'red');
       }
-      // if (!checkIndexPlayer && !checkIndDist && !checkIndAtack) {
-      //   this.gamePlay.setCursor(cursors.notallowed);
-      // }
+      if (actChar && ((chaeckIndComp && !checkIndAtack) || (!checkIndPlayer && !checkIndDist))) {
+        this.gamePlay.setCursor(cursors.notallowed);
+      }
     });
   }
 
@@ -141,6 +158,96 @@ export default class GameController {
     this.gamePlay.setCursor(cursors.auto);
     if (index !== this.activeCharPosition) {
       this.gamePlay.deselectCell(index);
+    }
+  }
+
+  discharge(index) {
+    this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
+    this.gamePlay.redrawPositions(this.arrCellHero);
+    this.gamePlay.deselectCell(this.previousIndexChar);
+    this.onCellLeave(index);
+    this.distanceP = null;
+    this.distanceAt = null;
+    this.activeChar = null;
+    this.state.activePlayer = 'comp';
+  }
+
+  dischargeComp() {
+    this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
+    this.gamePlay.redrawPositions(this.arrCellHero);
+    this.state.activePlayer = 'player';
+  }
+
+  computerLogic() {
+    const randomCharComp = Math.floor(Math.random() * this.compTeam.positionComp.length);
+    const activeCompChar = this.compTeam.positionComp[randomCharComp];
+    const activeCompCharPos = activeCompChar.position;
+    const activeCharAttack = activeCompChar.character.attackDistance;
+    const actCharDist = activeCompChar.character.distance;
+    const arrAttackComp = calcAttack(activeCharAttack, this.boardSize, activeCompCharPos);
+    const arrDistComp = calcDist(actCharDist, this.boardSize, activeCompCharPos);
+    const arrDefHero = [];
+    this.arrCellHero.forEach((item) => {
+      const checkAttackInd = arrAttackComp.includes(item.position);
+      const checkType = this.arrTypeHero.includes(item.character.type);
+      if (checkAttackInd && checkType && item.position !== activeCompCharPos) {
+        arrDefHero.push(item);
+      }
+    });
+    // атака
+    if (arrDefHero.length !== 0) {
+      let indexChar;
+      for (let i = 0; i < arrDefHero.length; i += 1) {
+        let health = 100;
+        if (arrDefHero[i].character.health < health) {
+          health = arrDefHero[i].character.health;
+          indexChar = i;
+        } else {
+          indexChar = Math.floor(Math.random() * arrDefHero.length);
+        }
+      }
+      const attacker = activeCompChar.character.attack;
+      const charAct = arrDefHero[indexChar];
+      const targetDef = charAct.character.defence;
+      const damage = Math.max(attacker - targetDef, attacker * 0.1);
+      const arrTeam = this.playerTeam.positionChar;
+      const numElPlay = arrTeam.findIndex((item) => item.position === charAct.position);
+      const healthTarget = charAct.character.health - damage;
+      this.gamePlay.showDamage(charAct.position, damage).then(() => {
+        this.playerTeam.positionChar[numElPlay].character.health = healthTarget;
+        if (this.playerTeam.positionChar[numElPlay].character.health < 1) {
+          this.playerTeam.positionChar.splice(numElPlay, 1);
+        }
+        this.dischargeComp();
+      });
+    } else {
+      const distGo = arrDistComp[Math.floor(Math.random() * arrDistComp.length)];
+      const compTeam = this.compTeam.positionComp;
+      const numEl = compTeam.findIndex((item) => item.position === activeCompCharPos);
+      this.compTeam.positionComp[numEl].position = distGo;
+      this.dischargeComp();
+    }
+  }
+
+  levelUp() {
+    for (let i = 0; i < this.playerTeam.positionChar.length; i += 1) {
+      const newPosition = positionGenerator(this.starLinePlay, this.boardSize);
+      const char = this.playerTeam.positionChar[i];
+      const attackBe = char.character.attack;
+      const defBe = char.character.defence;
+      const healCh = char.character.health;
+      const attackAfter = Math.max(attackBe, +(attackBe * (1.8 - (1 - healCh / 100))).toFixed());
+      const defenceAfter = Math.max(defBe, +(defBe * (1.8 - (1 - healCh / 100))).toFixed());
+      this.playerTeam.positionChar[i].character.attack = attackAfter;
+      this.playerTeam.positionChar[i].character.defence = defenceAfter;
+      this.state.scores += healCh;
+      if (healCh + 80 > 100) {
+        this.playerTeam.positionChar[i].character.health = 100;
+      } else {
+        this.playerTeam.positionChar[i].character.health += 80;
+      }
+      this.playerTeam.positionChar[i].character.level += 1;
+      this.playerTeam.positionChar[i].position = newPosition.next().value;
     }
   }
 }
