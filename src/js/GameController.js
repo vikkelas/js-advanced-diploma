@@ -35,7 +35,7 @@ export default class GameController {
 
   init() {
     this.playerTeam.creatChar(1, 2, undefined);
-    this.compTeam.genPosComp();
+    this.compTeam.genPosComp(1, 2);
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
     this.gamePlay.drawUi(this.state.level);
     this.gamePlay.redrawPositions(this.arrCellHero);
@@ -100,8 +100,7 @@ export default class GameController {
             this.computerLogic();
           } else {
             this.levelUp();
-            const newChar = this.playerTeam.creatChar(1, 1, this.playerTeam.allTypes);
-            this.arrCellHero.push(newChar);
+            this.changeLevelGame();
             this.discharge(index);
           }
         });
@@ -251,5 +250,13 @@ export default class GameController {
       this.playerTeam.positionChar[i].character.level += 1;
       this.playerTeam.positionChar[i].position = newPosition.next().value;
     }
+  }
+
+  changeLevelGame() {
+    this.state.level = themes.desert;
+
+    this.gamePlay.drawUi(this.state.level);
+    this.playerTeam.creatChar(1, 1, this.playerTeam.allTypes);
+    this.compTeam.genPosComp()
   }
 }

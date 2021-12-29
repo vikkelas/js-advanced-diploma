@@ -17,8 +17,8 @@ export default class CompTeam {
     this.boardSize = new GamePlay();
   }
 
-  genPosComp() {
-    const randomChar = generateTeam(this.allTypes, 1, 2);
+  genPosComp(maxLevel, amt) {
+    const randomChar = generateTeam(this.allTypes, maxLevel, amt);
     const randomPosition = positionGenerator(this.startLine, this.boardSize.boardSize);
     for (const item of randomChar) {
       this.positionComp.push(new PositionedCharacter(item, randomPosition.next().value));
