@@ -1,10 +1,9 @@
-export default class GameState {
-  constructor(firstPlayer) {
-    this.activePlayer = firstPlayer;
-    this.scores = 0;
-  }
+import CompTeam from "./CompTeam";
 
-  static from(object) {
-    return null;
+/* eslint-disable linebreak-style */
+export default class GameState {
+  constructor() {
+    this.scores = 0;
+    this.level = null;
   }
 }

@@ -71,6 +71,7 @@ export default class GamePlay {
    *
    * @param positions array of PositionedCharacter objects
    */
+
   redrawPositions(positions) {
     for (const cell of this.cells) {
       cell.innerHTML = '';

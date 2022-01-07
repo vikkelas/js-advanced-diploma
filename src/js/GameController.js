@@ -10,6 +10,7 @@ import {
 } from './utils';
 import {
   positionGenerator,
+  genThemes,
 } from './generators';
 import cursors from './cursors';
 
@@ -19,7 +20,7 @@ export default class GameController {
     this.stateService = stateService;
     this.playerTeam = new Team();
     this.compTeam = new CompTeam();
-    this.state = new GameState('player');
+    this.state = new GameState();
     this.previousIndexChar = null;
     this.activeChar = null;
     this.activeCharPosition = null;
@@ -29,11 +30,13 @@ export default class GameController {
     this.arrCellHero = null;
     this.distanceP = null;
     this.distanceAt = null;
-    this.state.level = themes.prairie;
+    this.genThem = genThemes(themes);
+    this.state.level = null;
     this.starLinePlay = [0, 1];
   }
 
   init() {
+    this.state.level = this.genThem.next().value;
     this.playerTeam.creatChar(1, 2, undefined);
     this.compTeam.genPosComp(1, 2);
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
@@ -46,6 +49,7 @@ export default class GameController {
     this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
     this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
     this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
+    this.gamePlay.addNewGameListener(this.onNewGameClick.bind(this));
   }
 
   onCellClick(index) {
@@ -130,6 +134,7 @@ export default class GameController {
       if (this.distanceAt !== null) {
         checkIndAtack = this.distanceAt.includes(index);
       }
+      const noCheck = (!checkIndPlayer && !checkIndDist && !chaeckIndComp);
       if (item.position === index) {
         const heroInfo = item.character;
         const messageInfo = `🎖 ${heroInfo.level} \u2694${heroInfo.attack} 🛡${heroInfo.defence} \u2764${heroInfo.health}`;
@@ -148,7 +153,7 @@ export default class GameController {
         this.gamePlay.setCursor(cursors.crosshair);
         this.gamePlay.selectCell(index, 'red');
       }
-      if (actChar && ((chaeckIndComp && !checkIndAtack) || (!checkIndPlayer && !checkIndDist))) {
+      if (actChar && ((chaeckIndComp && !checkIndAtack) || noCheck)) {
         this.gamePlay.setCursor(cursors.notallowed);
       }
     });
@@ -170,13 +175,14 @@ export default class GameController {
     this.distanceP = null;
     this.distanceAt = null;
     this.activeChar = null;
-    this.state.activePlayer = 'comp';
   }
 
   dischargeComp() {
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
     this.gamePlay.redrawPositions(this.arrCellHero);
-    this.state.activePlayer = 'player';
+    if (this.playerTeam.positionChar.length === 0) {
+      console.log('масив пустой');
+    }
   }
 
   computerLogic() {
@@ -232,7 +238,6 @@ export default class GameController {
 
   levelUp() {
     for (let i = 0; i < this.playerTeam.positionChar.length; i += 1) {
-      const newPosition = positionGenerator(this.starLinePlay, this.boardSize);
       const char = this.playerTeam.positionChar[i];
       const attackBe = char.character.attack;
       const defBe = char.character.defence;
@@ -248,15 +253,45 @@ export default class GameController {
         this.playerTeam.positionChar[i].character.health += 80;
       }
       this.playerTeam.positionChar[i].character.level += 1;
-      this.playerTeam.positionChar[i].position = newPosition.next().value;
     }
   }
 
   changeLevelGame() {
-    this.state.level = themes.desert;
+    console.log(this.state);
+    let maxLevel;
+    let amount;
+    let maxLevelComp;
+    const newPosition = positionGenerator(this.starLinePlay, this.boardSize);
+    this.state.level = this.genThem.next().value;
+    if (this.state.level === 'desert') {
+      amount = 1;
+      maxLevel = 1;
+      maxLevelComp = 2;
+    }
+    if (this.state.level === 'arctic') {
+      amount = 2;
+      maxLevel = 2;
+      maxLevelComp = 3;
+    }
+    if (this.state.level === 'mountain') {
+      amount = 2;
+      maxLevel = 3;
+      maxLevelComp = 4;
+    }
 
     this.gamePlay.drawUi(this.state.level);
-    this.playerTeam.creatChar(1, 1, this.playerTeam.allTypes);
-    this.compTeam.genPosComp()
+    this.playerTeam.creatChar(maxLevel, amount, this.playerTeam.allTypes);
+    for (let i = 0; i < this.playerTeam.positionChar.length; i += 1) {
+      this.playerTeam.positionChar[i].position = newPosition.next().value;
+    }
+    this.compTeam.genPosComp(maxLevelComp, this.playerTeam.positionChar.length);
+  }
+
+  onNewGameClick() {
+    this.state.level = null;
+    this.playerTeam = new Team();
+    this.compTeam = new CompTeam();
+    this.genThem = genThemes(themes);
+    this.init();
   }
 }

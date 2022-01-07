@@ -1,3 +1,4 @@
+/* eslint-disable linebreak-style */
 /**
  * Generates random characters
  *
@@ -10,7 +11,21 @@ export function* characterGenerator(allowedTypes, maxLevel) {
   while (true) {
     const RandomClass = allowedTypes[Math.floor(Math.random() * allowedTypes.length)];
     const characterRandom = new RandomClass();
+    let percent;
     characterRandom.level = Math.floor(1 + Math.random() * maxLevel);
+    if (characterRandom.level > 1) {
+      if (characterRandom.level === 2) {
+        percent = 35;
+      }
+      if (characterRandom.level === 3) {
+        percent = 60;
+      }
+      if (characterRandom.level === 4) {
+        percent = 100;
+      }
+      characterRandom.attack += (characterRandom.attack / 100) * percent;
+      characterRandom.defence += (characterRandom.defence / 100) * percent;
+    }
     yield characterRandom;
   }
 }
@@ -34,5 +49,12 @@ export function* positionGenerator(startLine, bordsize) {
   }
   for (const item of lineHero) {
     yield item;
+  }
+}
+
+export function* genThemes(obj) {
+  const arrObj = Object.keys(obj);
+  for (let i = 0; i < arrObj.length; i += 1) {
+    yield obj[arrObj[i]];
   }
 }
