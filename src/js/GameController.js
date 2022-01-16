@@ -11,6 +11,7 @@ import {
 import {
   positionGenerator,
   genThemes,
+  genGoCompPos,
 } from './generators';
 import cursors from './cursors';
 
@@ -52,62 +53,78 @@ export default class GameController {
     this.gamePlay.addNewGameListener(this.onNewGameClick.bind(this));
   }
 
+  deletListner() {
+    this.gamePlay.cellClickListeners = [];
+    this.gamePlay.cellEnterListeners = [];
+    this.state.list = 'nolistener';
+  }
+
   onCellClick(index) {
-    this.arrCellHero.forEach((item) => {
-      const checkType = this.arrTypeHero.includes(item.character.type);
-      if (item.position === index && checkType) {
-        this.activeChar = item;
-        this.activeCharPosition = item.position;
-        if (this.previousIndexChar === null) {
-          this.previousIndexChar = index;
-          this.gamePlay.selectCell(index);
-        } else {
-          this.gamePlay.deselectCell(this.previousIndexChar);
-          this.gamePlay.selectCell(index);
-          this.previousIndexChar = index;
-        }
-      } else if (item.position === index && !checkType && this.activeChar === null) {
-        GamePlay.showError('недопустимый персонаж');
-      }
-    });
-    // создание массивов с расположением персонажей
-    const posCharCom = [];
-    for (let i = 0; i < this.arrCellHero.length; i += 1) {
-      if (!this.arrTypeHero.includes(this.arrCellHero[i].character.type)) {
-        posCharCom.push(this.arrCellHero[i].position);
-      }
-    }
-    if (this.activeChar !== null) {
-      const charDist = this.activeChar.character.distance;
-      const charAttack = this.activeChar.character.attackDistance;
-      this.distanceAt = calcAttack(charAttack, this.boardSize, this.activeCharPosition);
-      this.distanceP = calcDist(charDist, this.boardSize, this.activeCharPosition);
-      if (this.distanceP.includes(index) && !posCharCom.includes(index)) {
-        const numElArr = this.playerTeam.positionChar.indexOf(this.activeChar);
-        this.playerTeam.positionChar[numElArr].position = index;
-        this.discharge(index);
-        this.computerLogic();
-      }
-      if (posCharCom.includes(index) && this.distanceAt.includes(index)) {
-        const attacker = this.activeChar.character.attack;
-        const numElComp = this.compTeam.positionComp.findIndex((item) => item.position === index);
-        const targetDef = this.compTeam.positionComp[numElComp].character.defence;
-        const damage = Math.max(attacker - targetDef, attacker * 0.1);
-        const healCh = this.compTeam.positionComp[numElComp].character.health - damage;
-        this.gamePlay.showDamage(index, damage).then(() => {
-          this.compTeam.positionComp[numElComp].character.health = healCh;
-          if (this.compTeam.positionComp[numElComp].character.health < 1) {
-            this.compTeam.positionComp.splice(numElComp, 1);
-          }
-          this.discharge(index);
-          if (this.compTeam.positionComp.length !== 0) {
-            this.computerLogic();
+    if (this.state.activePlayer === 'player') {
+      this.arrCellHero.forEach((item) => {
+        const checkType = this.arrTypeHero.includes(item.character.type);
+        if (item.position === index && checkType) {
+          this.activeChar = item;
+          this.activeCharPosition = item.position;
+          if (this.previousIndexChar === null) {
+            this.previousIndexChar = index;
+            this.gamePlay.selectCell(index);
           } else {
-            this.levelUp();
-            this.changeLevelGame();
-            this.discharge(index);
+            this.gamePlay.deselectCell(this.previousIndexChar);
+            this.gamePlay.selectCell(index);
+            this.previousIndexChar = index;
           }
-        });
+        } else if (item.position === index && !checkType && this.activeChar === null) {
+          GamePlay.showError('недопустимый персонаж');
+        }
+      });
+      // создание массивов с расположением персонажей
+      const posCharCom = [];
+      for (let i = 0; i < this.arrCellHero.length; i += 1) {
+        if (!this.arrTypeHero.includes(this.arrCellHero[i].character.type)) {
+          posCharCom.push(this.arrCellHero[i].position);
+        }
+      }
+      if (this.activeChar !== null) {
+        const charDist = this.activeChar.character.distance;
+        const charAttack = this.activeChar.character.attackDistance;
+        this.distanceAt = calcAttack(charAttack, this.boardSize, this.activeCharPosition);
+        this.distanceP = calcDist(charDist, this.boardSize, this.activeCharPosition);
+        if (this.distanceP.includes(index) && !posCharCom.includes(index)) {
+          const numElArr = this.playerTeam.positionChar.indexOf(this.activeChar);
+          this.playerTeam.positionChar[numElArr].position = index;
+          this.discharge(index);
+          this.state.activePlayer = 'comp';
+          this.computerLogic();
+        }
+        if (posCharCom.includes(index) && this.distanceAt.includes(index)) {
+          const attacker = this.activeChar.character.attack;
+          const numElComp = this.compTeam.positionComp.findIndex((item) => item.position === index);
+          const targetDef = this.compTeam.positionComp[numElComp].character.defence;
+          const damage = Math.max(attacker - targetDef, attacker * 0.1);
+          const healCh = this.compTeam.positionComp[numElComp].character.health - damage;
+
+          this.gamePlay.showDamage(index, damage).then(() => {
+            this.compTeam.positionComp[numElComp].character.health = healCh;
+            if (this.compTeam.positionComp[numElComp].character.health < 1) {
+              this.compTeam.positionComp.splice(numElComp, 1);
+              this.discharge(index);
+            }
+            if (this.compTeam.positionComp.length !== 0) {
+              this.discharge(index);
+              this.state.activePlayer = 'comp';
+              this.computerLogic();
+            } else if (this.compTeam.positionComp.length === 0 && this.state.level !== 'mountain') {
+              this.levelUp();
+              this.changeLevelGame();
+              this.discharge(index);
+              this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+              this.state.activePlayer = 'player';
+            } else if (this.compTeam.positionComp.length === 0 && this.state.level === 'mountain') {
+              this.deletListner();
+            }
+          });
+        }
       }
     }
   }
@@ -168,71 +185,90 @@ export default class GameController {
   }
 
   discharge(index) {
+    this.activeChar = null;
+    this.gamePlay.cellClickListeners = [];
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
     this.gamePlay.redrawPositions(this.arrCellHero);
     this.gamePlay.deselectCell(this.previousIndexChar);
     this.onCellLeave(index);
     this.distanceP = null;
     this.distanceAt = null;
-    this.activeChar = null;
   }
 
   dischargeComp() {
+    this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
     this.gamePlay.redrawPositions(this.arrCellHero);
-    if (this.playerTeam.positionChar.length === 0) {
-      console.log('масив пустой');
-    }
   }
 
   computerLogic() {
-    const randomCharComp = Math.floor(Math.random() * this.compTeam.positionComp.length);
-    const activeCompChar = this.compTeam.positionComp[randomCharComp];
-    const activeCompCharPos = activeCompChar.position;
-    const activeCharAttack = activeCompChar.character.attackDistance;
-    const actCharDist = activeCompChar.character.distance;
-    const arrAttackComp = calcAttack(activeCharAttack, this.boardSize, activeCompCharPos);
-    const arrDistComp = calcDist(actCharDist, this.boardSize, activeCompCharPos);
-    const arrDefHero = [];
-    this.arrCellHero.forEach((item) => {
-      const checkAttackInd = arrAttackComp.includes(item.position);
-      const checkType = this.arrTypeHero.includes(item.character.type);
-      if (checkAttackInd && checkType && item.position !== activeCompCharPos) {
-        arrDefHero.push(item);
-      }
-    });
-    // атака
-    if (arrDefHero.length !== 0) {
-      let indexChar;
-      for (let i = 0; i < arrDefHero.length; i += 1) {
-        let health = 100;
-        if (arrDefHero[i].character.health < health) {
-          health = arrDefHero[i].character.health;
-          indexChar = i;
-        } else {
-          indexChar = Math.floor(Math.random() * arrDefHero.length);
+    if (this.state.activePlayer === 'comp') {
+      const randomCharComp = Math.floor(Math.random() * this.compTeam.positionComp.length);
+      const activeCompChar = this.compTeam.positionComp[randomCharComp];
+      const activeCompCharPos = activeCompChar.position;
+      const activeCharAttack = activeCompChar.character.attackDistance;
+      const actCharDist = activeCompChar.character.distance;
+      const arrAttackComp = calcAttack(activeCharAttack, this.boardSize, activeCompCharPos);
+      const arrDistComp = calcDist(actCharDist, this.boardSize, activeCompCharPos);
+      const arrDefHero = [];
+      const arrAllHero = [];
+      this.arrCellHero.forEach((item) => {
+        arrAllHero.push(item.position);
+        const checkAttackInd = arrAttackComp.includes(item.position);
+        const checkType = this.arrTypeHero.includes(item.character.type);
+        if (checkAttackInd && checkType && item.position !== activeCompCharPos) {
+          arrDefHero.push(item);
         }
-      }
-      const attacker = activeCompChar.character.attack;
-      const charAct = arrDefHero[indexChar];
-      const targetDef = charAct.character.defence;
-      const damage = Math.max(attacker - targetDef, attacker * 0.1);
-      const arrTeam = this.playerTeam.positionChar;
-      const numElPlay = arrTeam.findIndex((item) => item.position === charAct.position);
-      const healthTarget = charAct.character.health - damage;
-      this.gamePlay.showDamage(charAct.position, damage).then(() => {
-        this.playerTeam.positionChar[numElPlay].character.health = healthTarget;
-        if (this.playerTeam.positionChar[numElPlay].character.health < 1) {
-          this.playerTeam.positionChar.splice(numElPlay, 1);
-        }
-        this.dischargeComp();
       });
-    } else {
-      const distGo = arrDistComp[Math.floor(Math.random() * arrDistComp.length)];
-      const compTeam = this.compTeam.positionComp;
-      const numEl = compTeam.findIndex((item) => item.position === activeCompCharPos);
-      this.compTeam.positionComp[numEl].position = distGo;
-      this.dischargeComp();
+      // атака
+      if (arrDefHero.length !== 0) {
+        let indexChar;
+        for (let i = 0; i < arrDefHero.length; i += 1) {
+          let health = 100;
+          if (arrDefHero[i].character.health < health) {
+            health = arrDefHero[i].character.health;
+            indexChar = i;
+          } else {
+            indexChar = Math.floor(Math.random() * arrDefHero.length);
+          }
+        }
+        const attacker = activeCompChar.character.attack;
+        const charAct = arrDefHero[indexChar];
+        const targetDef = charAct.character.defence;
+        const damage = Math.floor(Math.max(attacker - targetDef, attacker * 0.1));
+        const arrTeam = this.playerTeam.positionChar;
+        const numElPlay = arrTeam.findIndex((item) => item.position === charAct.position);
+        const healthTarget = charAct.character.health - damage;
+        this.gamePlay.showDamage(charAct.position, damage).then(() => {
+          this.playerTeam.positionChar[numElPlay].character.health = healthTarget;
+          if (this.playerTeam.positionChar[numElPlay].character.health < 1) {
+            this.playerTeam.positionChar.splice(numElPlay, 1);
+          }
+          this.dischargeComp();
+          this.state.activePlayer = 'player';
+
+          if (this.playerTeam.positionChar.length === 0) {
+            console.log('game ower');
+            this.deletListner();
+          }
+        });
+      } else {
+        const distGo = genGoCompPos(arrDistComp);
+        let distGen = distGo.next().value;
+        const compTeam = this.compTeam.positionComp;
+        const numEl = compTeam.findIndex((item) => item.position === activeCompCharPos);
+        const indexGen = arrAllHero.indexOf(distGen);
+        if (indexGen === -1) {
+          this.compTeam.positionComp[numEl].position = distGen;
+          this.dischargeComp();
+          this.state.activePlayer = 'player';
+        } else {
+          distGen = distGo.next().value;
+          this.compTeam.positionComp[numEl].position = distGen;
+          this.dischargeComp();
+          this.state.activePlayer = 'player';
+        }
+      }
     }
   }
 
@@ -244,9 +280,9 @@ export default class GameController {
       const healCh = char.character.health;
       const attackAfter = Math.max(attackBe, +(attackBe * (1.8 - (1 - healCh / 100))).toFixed());
       const defenceAfter = Math.max(defBe, +(defBe * (1.8 - (1 - healCh / 100))).toFixed());
-      this.playerTeam.positionChar[i].character.attack = attackAfter;
-      this.playerTeam.positionChar[i].character.defence = defenceAfter;
-      this.state.scores += healCh;
+      this.playerTeam.positionChar[i].character.attack = Math.floor(attackAfter);
+      this.playerTeam.positionChar[i].character.defence = Math.floor(defenceAfter);
+      this.state.scores += Math.floor(healCh);
       if (healCh + 80 > 100) {
         this.playerTeam.positionChar[i].character.health = 100;
       } else {
@@ -257,7 +293,6 @@ export default class GameController {
   }
 
   changeLevelGame() {
-    console.log(this.state);
     let maxLevel;
     let amount;
     let maxLevelComp;
@@ -287,11 +322,27 @@ export default class GameController {
     this.compTeam.genPosComp(maxLevelComp, this.playerTeam.positionChar.length);
   }
 
-  onNewGameClick() {
+  utilFunc() {
     this.state.level = null;
     this.playerTeam = new Team();
     this.compTeam = new CompTeam();
     this.genThem = genThemes(themes);
-    this.init();
+    this.state.level = this.genThem.next().value;
+    this.playerTeam.creatChar(1, 2, undefined);
+    this.compTeam.genPosComp(1, 2);
+    this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
+    this.gamePlay.drawUi(this.state.level);
+    this.gamePlay.redrawPositions(this.arrCellHero);
+  }
+
+  onNewGameClick() {
+    if (this.state.list === 'nolistener') {
+      this.utilFunc();
+      this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
+      this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+      this.state.list = 'listener';
+    } else {
+      this.utilFunc();
+    }
   }
 }

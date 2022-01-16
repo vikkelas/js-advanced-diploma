@@ -23,8 +23,8 @@ export function* characterGenerator(allowedTypes, maxLevel) {
       if (characterRandom.level === 4) {
         percent = 100;
       }
-      characterRandom.attack += (characterRandom.attack / 100) * percent;
-      characterRandom.defence += (characterRandom.defence / 100) * percent;
+      characterRandom.attack += Math.floor((characterRandom.attack / 100) * percent);
+      characterRandom.defence += Math.floor((characterRandom.defence / 100) * percent);
     }
     yield characterRandom;
   }
@@ -56,5 +56,15 @@ export function* genThemes(obj) {
   const arrObj = Object.keys(obj);
   for (let i = 0; i < arrObj.length; i += 1) {
     yield obj[arrObj[i]];
+  }
+}
+
+export function* genGoCompPos(arrDistComp) {
+  for (let i = arrDistComp.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arrDistComp[i], arrDistComp[j]] = [arrDistComp[j], arrDistComp[i]];
+  }
+  for (const item of arrDistComp) {
+    yield item;
   }
 }
