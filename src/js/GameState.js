@@ -7,5 +7,6 @@ export default class GameState {
     this.activePlayer = 'player';
     this.arrCompTeam = null;
     this.arrPlayerTeam = null;
+    this.genThemSave = null;
   }
 }

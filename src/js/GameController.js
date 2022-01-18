@@ -363,14 +363,17 @@ export default class GameController {
 
   onLoadGameClick() {
     const objLoad = this.stateService.load();
-    this.state = objLoad;
-    this.arrCellHero = [];
-    console.log(this.state.arrPlayerTeam);
-    console.log(this.arrCellHero);
-    this.compTeam.positionChar = this.state.arrCompTeam;
-    this.playerTeam.positionComp = this.state.arrPlayerTeam;
-    this.arrCellHero = [...this.compTeam.positionChar, ...this.playerTeam.positionComp];
-    this.gamePlay.redrawPositions(this.arrCellHero);
-    this.addListnerLoad();
+    if (objLoad !== null) {
+      this.state = objLoad;
+      this.arrCellHero = [];
+      this.compTeam.positionComp = this.state.arrCompTeam;
+      this.playerTeam.positionChar = this.state.arrPlayerTeam;
+      this.arrCellHero = [...this.compTeam.positionComp, ...this.playerTeam.positionChar];
+      this.gamePlay.drawUi(this.state.level);
+      this.gamePlay.redrawPositions(this.arrCellHero);
+      this.addListnerLoad();
+    } else {
+      alert('no save game');
+    }
   }
 }
