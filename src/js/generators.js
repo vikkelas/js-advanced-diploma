@@ -52,13 +52,6 @@ export function* positionGenerator(startLine, bordsize) {
   }
 }
 
-export function* genThemes(obj) {
-  const arrObj = Object.keys(obj);
-  for (let i = 0; i < arrObj.length; i += 1) {
-    yield obj[arrObj[i]];
-  }
-}
-
 export function* genGoCompPos(arrDistComp) {
   for (let i = arrDistComp.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));

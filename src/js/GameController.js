@@ -1,5 +1,4 @@
 /* eslint-disable linebreak-style */
-import themes from './themes';
 import Team from './Team';
 import CompTeam from './CompTeam';
 import GameState from './GameState';
@@ -101,7 +100,7 @@ export default class GameController {
           const targetDef = this.compTeam.positionComp[numElComp].character.defence;
           const damage = Math.max(attacker - targetDef, attacker * 0.1);
           const healCh = this.compTeam.positionComp[numElComp].character.health - damage;
-
+          this.discharge(index);
           this.gamePlay.showDamage(index, damage).then(() => {
             this.compTeam.positionComp[numElComp].character.health = healCh;
             if (this.compTeam.positionComp[numElComp].character.health < 1) {
@@ -155,7 +154,7 @@ export default class GameController {
         const messageInfo = `🎖 ${heroInfo.level} \u2694${heroInfo.attack} 🛡${heroInfo.defence} \u2764${heroInfo.health}`;
         this.gamePlay.showCellTooltip(messageInfo, index);
       }
-      if (this.activeCharPosition === null && checkIndPlayer) {
+      if (this.activeCharPosition === null) {
         this.gamePlay.setCursor(cursors.pointer);
       }
       if ((checkIndPlayer && index !== this.activeCharPosition) || checkIndDist) {
