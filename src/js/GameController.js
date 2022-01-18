@@ -10,7 +10,6 @@ import {
 } from './utils';
 import {
   positionGenerator,
-  genThemes,
   genGoCompPos,
 } from './generators';
 import cursors from './cursors';
@@ -31,13 +30,10 @@ export default class GameController {
     this.arrCellHero = null;
     this.distanceP = null;
     this.distanceAt = null;
-    this.genThem = genThemes(themes);
-    this.state.level = null;
     this.starLinePlay = [0, 1];
   }
 
   init() {
-    this.state.level = this.genThem.next().value;
     this.playerTeam.creatChar(1, 2, undefined);
     this.compTeam.genPosComp(1, 2);
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
@@ -303,7 +299,13 @@ export default class GameController {
     let amount;
     let maxLevelComp;
     const newPosition = positionGenerator(this.starLinePlay, this.boardSize);
-    this.state.level = this.genThem.next().value;
+    if (this.state.level === 'prairie') {
+      this.state.level = 'desert';
+    } else if (this.state.level === 'desert') {
+      this.state.level = 'arctic';
+    } else if (this.state.level === 'arctic') {
+      this.state.level = 'mountain';
+    }
     if (this.state.level === 'desert') {
       amount = 1;
       maxLevel = 1;
@@ -319,7 +321,6 @@ export default class GameController {
       maxLevel = 3;
       maxLevelComp = 4;
     }
-
     this.gamePlay.drawUi(this.state.level);
     this.playerTeam.creatChar(maxLevel, amount, this.playerTeam.allTypes);
     for (let i = 0; i < this.playerTeam.positionChar.length; i += 1) {
@@ -329,11 +330,9 @@ export default class GameController {
   }
 
   utilFunc() {
-    this.state.level = null;
+    this.state.level = 'prairie';
     this.playerTeam = new Team();
     this.compTeam = new CompTeam();
-    this.genThem = genThemes(themes);
-    this.state.level = this.genThem.next().value;
     this.playerTeam.creatChar(1, 2, undefined);
     this.compTeam.genPosComp(1, 2);
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
@@ -364,13 +363,17 @@ export default class GameController {
   onLoadGameClick() {
     const objLoad = this.stateService.load();
     this.state = objLoad;
+    console.log(this.state);
     this.arrCellHero = [];
-    console.log(this.state.arrPlayerTeam);
-    console.log(this.arrCellHero);
-    this.compTeam.positionChar = this.state.arrCompTeam;
-    this.playerTeam.positionComp = this.state.arrPlayerTeam;
-    this.arrCellHero = [...this.compTeam.positionChar, ...this.playerTeam.positionComp];
+    this.compTeam.positionComp = this.state.arrCompTeam;
+    this.playerTeam.positionChar = this.state.arrPlayerTeam;
+    this.arrCellHero = [...this.compTeam.positionComp, ...this.playerTeam.positionChar];
+    this.gamePlay.drawUi(this.state.level);
     this.gamePlay.redrawPositions(this.arrCellHero);
-    this.addListnerLoad();
+    if (this.state.list !== 'nolistener') {
+      this.addListnerLoad();
+    } else {
+      this.deletListner();
+    }
   }
 }
