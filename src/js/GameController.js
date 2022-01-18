@@ -51,6 +51,8 @@ export default class GameController {
     this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
     this.gamePlay.addCellLeaveListener(this.onCellLeave.bind(this));
     this.gamePlay.addNewGameListener(this.onNewGameClick.bind(this));
+    this.gamePlay.addSaveGameListener(this.onSaveGameClick.bind(this));
+    this.gamePlay.addLoadGameListener(this.onLoadGameClick.bind(this));
   }
 
   deletListner() {
@@ -193,12 +195,16 @@ export default class GameController {
     this.onCellLeave(index);
     this.distanceP = null;
     this.distanceAt = null;
+    this.state.arrCompTeam = this.compTeam.positionComp;
+    this.state.arrPlayerTeam = this.playerTeam.positionChar;
   }
 
   dischargeComp() {
     this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
     this.gamePlay.redrawPositions(this.arrCellHero);
+    this.state.arrCompTeam = this.compTeam.positionComp;
+    this.state.arrPlayerTeam = this.playerTeam.positionChar;
   }
 
   computerLogic() {
@@ -344,5 +350,27 @@ export default class GameController {
     } else {
       this.utilFunc();
     }
+  }
+
+  onSaveGameClick() {
+    this.stateService.save(this.state);
+  }
+
+  addListnerLoad() {
+    this.gamePlay.addCellEnterListener(this.onCellEnter.bind(this));
+    this.gamePlay.addCellClickListener(this.onCellClick.bind(this));
+  }
+
+  onLoadGameClick() {
+    const objLoad = this.stateService.load();
+    this.state = objLoad;
+    this.arrCellHero = [];
+    console.log(this.state.arrPlayerTeam);
+    console.log(this.arrCellHero);
+    this.compTeam.positionChar = this.state.arrCompTeam;
+    this.playerTeam.positionComp = this.state.arrPlayerTeam;
+    this.arrCellHero = [...this.compTeam.positionChar, ...this.playerTeam.positionComp];
+    this.gamePlay.redrawPositions(this.arrCellHero);
+    this.addListnerLoad();
   }
 }

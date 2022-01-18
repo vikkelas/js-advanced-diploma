@@ -5,5 +5,7 @@ export default class GameState {
     this.level = null;
     this.list = 'listener';
     this.activePlayer = 'player';
+    this.arrCompTeam = null;
+    this.arrPlayerTeam = null;
   }
 }
