@@ -1,5 +1,4 @@
 /* eslint-disable linebreak-style */
-import themes from './themes';
 import Team from './Team';
 import CompTeam from './CompTeam';
 import GameState from './GameState';
@@ -10,7 +9,6 @@ import {
 } from './utils';
 import {
   positionGenerator,
-  genThemes,
   genGoCompPos,
 } from './generators';
 import cursors from './cursors';
@@ -31,13 +29,10 @@ export default class GameController {
     this.arrCellHero = null;
     this.distanceP = null;
     this.distanceAt = null;
-    this.genThem = genThemes(themes);
-    this.state.level = null;
     this.starLinePlay = [0, 1];
   }
 
   init() {
-    this.state.level = this.genThem.next().value;
     this.playerTeam.creatChar(1, 2, undefined);
     this.compTeam.genPosComp(1, 2);
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
@@ -105,7 +100,7 @@ export default class GameController {
           const targetDef = this.compTeam.positionComp[numElComp].character.defence;
           const damage = Math.max(attacker - targetDef, attacker * 0.1);
           const healCh = this.compTeam.positionComp[numElComp].character.health - damage;
-
+          this.discharge(index);
           this.gamePlay.showDamage(index, damage).then(() => {
             this.compTeam.positionComp[numElComp].character.health = healCh;
             if (this.compTeam.positionComp[numElComp].character.health < 1) {
@@ -159,7 +154,7 @@ export default class GameController {
         const messageInfo = `🎖 ${heroInfo.level} \u2694${heroInfo.attack} 🛡${heroInfo.defence} \u2764${heroInfo.health}`;
         this.gamePlay.showCellTooltip(messageInfo, index);
       }
-      if (this.activeCharPosition === null && checkIndPlayer) {
+      if (this.activeCharPosition === null) {
         this.gamePlay.setCursor(cursors.pointer);
       }
       if ((checkIndPlayer && index !== this.activeCharPosition) || checkIndDist) {
@@ -303,7 +298,13 @@ export default class GameController {
     let amount;
     let maxLevelComp;
     const newPosition = positionGenerator(this.starLinePlay, this.boardSize);
-    this.state.level = this.genThem.next().value;
+    if (this.state.level === 'prairie') {
+      this.state.level = 'desert';
+    } else if (this.state.level === 'desert') {
+      this.state.level = 'arctic';
+    } else if (this.state.level === 'arctic') {
+      this.state.level = 'mountain';
+    }
     if (this.state.level === 'desert') {
       amount = 1;
       maxLevel = 1;
@@ -319,7 +320,6 @@ export default class GameController {
       maxLevel = 3;
       maxLevelComp = 4;
     }
-
     this.gamePlay.drawUi(this.state.level);
     this.playerTeam.creatChar(maxLevel, amount, this.playerTeam.allTypes);
     for (let i = 0; i < this.playerTeam.positionChar.length; i += 1) {
@@ -329,11 +329,9 @@ export default class GameController {
   }
 
   utilFunc() {
-    this.state.level = null;
+    this.state.level = 'prairie';
     this.playerTeam = new Team();
     this.compTeam = new CompTeam();
-    this.genThem = genThemes(themes);
-    this.state.level = this.genThem.next().value;
     this.playerTeam.creatChar(1, 2, undefined);
     this.compTeam.genPosComp(1, 2);
     this.arrCellHero = [...this.playerTeam.positionChar, ...this.compTeam.positionComp];
@@ -363,17 +361,18 @@ export default class GameController {
 
   onLoadGameClick() {
     const objLoad = this.stateService.load();
-    if (objLoad !== null) {
-      this.state = objLoad;
-      this.arrCellHero = [];
-      this.compTeam.positionComp = this.state.arrCompTeam;
-      this.playerTeam.positionChar = this.state.arrPlayerTeam;
-      this.arrCellHero = [...this.compTeam.positionComp, ...this.playerTeam.positionChar];
-      this.gamePlay.drawUi(this.state.level);
-      this.gamePlay.redrawPositions(this.arrCellHero);
+    this.state = objLoad;
+    console.log(this.state);
+    this.arrCellHero = [];
+    this.compTeam.positionComp = this.state.arrCompTeam;
+    this.playerTeam.positionChar = this.state.arrPlayerTeam;
+    this.arrCellHero = [...this.compTeam.positionComp, ...this.playerTeam.positionChar];
+    this.gamePlay.drawUi(this.state.level);
+    this.gamePlay.redrawPositions(this.arrCellHero);
+    if (this.state.list !== 'nolistener') {
       this.addListnerLoad();
     } else {
-      alert('no save game');
+      this.deletListner();
     }
   }
 }
