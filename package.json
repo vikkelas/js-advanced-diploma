@@ -23,7 +23,7 @@
   "bugs": {
     "url": "https://github.com/vikkelas/js-advanced-diploma/issues"
   },
-  "homepage": "https://github.com/vikkelas/js-advanced-diploma#readme",
+  "homepage": "https://github.com/vikkelas/js-advanced-diploma",
   "devDependencies": {
     "@babel/cli": "^7.8.4",
     "@babel/core": "^7.9.0",
